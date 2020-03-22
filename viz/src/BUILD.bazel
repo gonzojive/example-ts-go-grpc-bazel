@@ -56,6 +56,9 @@ ng_module(
         "@npm//plotly.js",
         "@npm//plotly.js-dist",
         "@npm//plotly.js-mapbox-dist",
+        "@npm//@improbable-eng/grpc-web",
+        "@npm//google-protobuf",
+        #"@npm//google-protobuf:google-protobuf__umd",
     ],
 )
 
@@ -112,8 +115,8 @@ ts_devserver(
         "npm/node_modules/core-js/client",
         "npm/node_modules/systemjs/dist",
     ],
-    devserver = "//httpserver/custom_devserver:custom_devserver",
-    devserver_host = "//httpserver/custom_devserver:custom_devserver",
+    #devserver = "//httpserver/custom_devserver:custom_devserver",
+    #devserver_host = "//httpserver/custom_devserver:custom_devserver",
     # Run the program from the development version of the main
     entry_module = "examples_angular/src/main.dev",
     # These scripts will be included in the JS bundle after require.js

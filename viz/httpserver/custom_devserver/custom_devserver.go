@@ -121,7 +121,7 @@ func main() {
 	}
 
 	correctScriptFilePath := func(scriptPath string) string {
-		return filepath.Join(".", scriptPath)
+		return filepath.Join("..", scriptPath)
 	}
 
 	// Include all user scripts in preScripts. This should always include

@@ -24,7 +24,7 @@ export class Home {
   };
 
   ngOnInit() {
-    console.log("initialized home comonent w/protobuf %o", xx);
+    //console.log("initialized home comonent w/protobuf %o", xx);
     const service: feservice.FrontendService = new feservice.FrontendService();
   }
 }

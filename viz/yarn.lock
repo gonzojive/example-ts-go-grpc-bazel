@@ -851,6 +851,11 @@
   dependencies:
     tmp "0.1.0"
 
+"@bazel/labs@^1.4.1":
+  version "1.4.1"
+  resolved "https://registry.yarnpkg.com/@bazel/labs/-/labs-1.4.1.tgz#0a8714f7045c662a1456f006664762b2858f6d49"
+  integrity sha512-/4wQ6jmLXDLOiZc5zyndtaWlWXx4oshHWWPoi8xmyIdYf8tfpMUw6ddkJeVKWhEKw19F3LkfcSoRskR8W+QtnA==
+
 "@bazel/protractor@^1.4.1":
   version "1.4.1"
   resolved "https://registry.yarnpkg.com/@bazel/protractor/-/protractor-1.4.1.tgz#fb668429ddc7d1d725d9ce9cf16a29e0e39ab2e0"
@@ -1147,11 +1152,6 @@
   version "0.0.39"
   resolved "https://registry.yarnpkg.com/@types/estree/-/estree-0.0.39.tgz#e177e699ee1b8c22d23174caaa7422644389509f"
   integrity sha512-EYNwp3bU+98cpU4lAWYYL7Zz+2gryWH1qbdDTidVd6hkiR6weksdbMadyXKXNPEkQFhXM+hVO9ZygomHXp+AIw==
-
-"@types/google-protobuf@^3.7.2":
-  version "3.7.2"
-  resolved "https://registry.yarnpkg.com/@types/google-protobuf/-/google-protobuf-3.7.2.tgz#cd8a360c193ce4d672575a20a79f49ba036d38d2"
-  integrity sha512-ifFemzjNchFBCtHS6bZNhSZCBu7tbtOe0e8qY0z2J4HtFXmPJjm6fXSaQsTG7yhShBEZtt2oP/bkwu5k+emlkQ==
 
 "@types/jasmine@3.4.0":
   version "3.4.0"

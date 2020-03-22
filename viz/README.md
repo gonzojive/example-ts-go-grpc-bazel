@@ -187,3 +187,7 @@ Example of adding a new repo
 ```shell
 bazel run //:gazelle update-repos google.com/protobuf
 ```
+
+```shell
+bazel aquery @npm//google-protobuf:all --output=textproto
+```
