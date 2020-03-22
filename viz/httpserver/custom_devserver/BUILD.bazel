@@ -1,0 +1,23 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+
+# gazelle:resolve go go github.com/bazelbuild/rules_typescript/devserver/concatjs @build_bazel_rules_typescript//devserver/concatjs:go_default_library
+# gazelle:resolve go go github.com/bazelbuild/rules_typescript/devserver/devserver @build_bazel_rules_typescript//devserver/devserver:go_default_library
+# gazelle:resolve go go github.com/bazelbuild/rules_typescript/devserver/runfiles @build_bazel_rules_typescript//devserver/runfiles:go_default_library
+go_library(
+    name = "go_default_library",
+    srcs = ["custom_devserver.go"],
+    importpath = "github.com/gonzojive/example-ts-go-grpc-bazel/viz/httpserver/custom_devserver",
+    visibility = ["//visibility:private"],
+    deps = [
+        "@build_bazel_rules_typescript//devserver/concatjs:go_default_library",
+        "@build_bazel_rules_typescript//devserver/devserver:go_default_library",
+        "@build_bazel_rules_typescript//devserver/runfiles:go_default_library",
+        "@com_github_golang_glog//:go_default_library",
+    ],
+)
+
+go_binary(
+    name = "custom_devserver",
+    embed = [":go_default_library"],
+    visibility = ["//visibility:public"],
+)

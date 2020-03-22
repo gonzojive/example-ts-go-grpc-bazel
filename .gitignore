@@ -1,0 +1,15 @@
+caiso_node_locations
+energy-costs
+lmp_histograms
+*.pb.go
+
+.bazelrc.user
+.idea
+rules_nodejs-*.tar.gz
+dist
+bazel-out
+/e2e/*/bazel-*
+/viz/*/bazel-*
+node_modules
+!/third_party/npm/node_modules
+yarn-error.log

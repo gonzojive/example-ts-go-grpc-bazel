@@ -1,0 +1,6 @@
+github.com/bazelbuild/rules_go v0.22.2 h1:v9v8Xxwai2QedNzPxbNEGWgQGsAq6/Ow1jCdfMc36Bc=
+github.com/bazelbuild/rules_go v0.22.2/go.mod h1:MC23Dc/wkXEyk3Wpq6lCqz0ZAYOZDw2DR5y3N1q2i7M=
+github.com/bazelbuild/rules_typescript v0.14.1-0.20200226224932-10a5a86885f9 h1:Ty049rG9aIY9Yh8cHtFFn4QmDLyjeGcKyJhihJtCr+U=
+github.com/bazelbuild/rules_typescript v0.14.1-0.20200226224932-10a5a86885f9/go.mod h1:tGehZJEj/yVJBR4dl6SGpHBct3SWq0GP6VlObLuYcfI=
+github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b h1:VKtxabqXZkF25pY9ekfRL6a582T4P37/31XEstQ5p58=
+github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b/go.mod h1:SBH7ygxi8pfUlaOkMMuAQtPIUF8ecWP5IEl/CR7VP2Q=

@@ -1,0 +1,31 @@
+load("@npm_angular_bazel//:index.bzl", "ng_module")
+load("@npm_bazel_typescript//:index.bzl", "ts_library")
+
+package(default_visibility = ["//:__subpackages__"])
+
+ng_module(
+    name = "home",
+    srcs = ["home.ts"],
+    assets = ["home.html"],
+    tsconfig = "//src:tsconfig.json",
+    deps = [
+        "@npm//@angular/core",
+        "@npm//@angular/router",
+        "@npm//:node_modules",
+        "@npm//plotly.js",
+        "@npm//angular-plotly.js",
+        "@npm//plotly.js-dist",
+        "@npm//plotly.js-mapbox-dist",
+        "//httpserver/frontendpb:frontendpb_ts_proto",
+        "@npm//@improbable-eng/grpc-web",
+        "@npm//google-protobuf",
+    ],
+)
+
+# ts_library(
+#     name = "my_plotly",
+#     deps = [
+#         "@npm//plotly.js",
+#     ]
+
+# )

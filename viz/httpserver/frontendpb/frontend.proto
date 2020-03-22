@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+package energycosts.frontend;
+
+option go_package = "github.com/gonzojive/energy-costs/web/viz/httpserver/frontendpb";
+
+// import "google/protobuf/any.proto";
+// import "google/protobuf/timestamp.proto";
+// import "google/protobuf/duration.proto";
+
+// A service for energy related frontend stuff. Should be served
+// using gRPC-web.
+service FrontendService {
+    rpc GetGraph (GetGraphRequest) returns (GetGraphResponse) {}
+}
+
+message GetGraphRequest {
+    string group_id = 1;
+}
+
+message GetGraphResponse {
+}
+

@@ -1,0 +1,279 @@
+# The WORKSPACE file tells Bazel that this directory is a "workspace", which is like a project root.
+# The content of this file specifies all the external dependencies Bazel needs to perform a build.
+
+####################################
+# ESModule imports (and TypeScript imports) can be absolute starting with the workspace name.
+# The name of the workspace should match the npm package where we publish, so that these
+# imports also make sense when referencing the published package.
+workspace(
+    name = "examples_angular",
+    managed_directories = {"@npm": ["node_modules"]},
+)
+
+# These rules are built-into Bazel but we need to load them first to download more rules
+load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
+load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+
+# Fetch rules_nodejs so we can install our npm dependencies
+http_archive(
+    name = "build_bazel_rules_nodejs",
+    sha256 = "2eca5b934dee47b5ff304f502ae187c40ec4e33e12bcbce872a2eeb786e23269",
+    urls = ["https://github.com/bazelbuild/rules_nodejs/releases/download/1.4.1/rules_nodejs-1.4.1.tar.gz"],
+)
+
+# git_repository(
+#     name = "build_bazel_rules_nodejs",
+#     commit = "c6fc083c0a2e7ae69f4b8fb17bcf55cc4f37f116",
+#     remote = "https://github.com/alexeagle/rules_nodejs",
+# )
+
+# git_repository(
+#     name = "build_bazel_rules_nodejs",
+#     commit = "628c2c52d9fdd7472fad392c5f611a2ce60a2321",
+#     remote = "https://github.com/bazelbuild/rules_nodejs",
+# )
+
+# Fetch sass rules for compiling sass files
+http_archive(
+    name = "io_bazel_rules_sass",
+    sha256 = "c78be58f5e0a29a04686b628cf54faaee0094322ae0ac99da5a8a8afca59a647",
+    strip_prefix = "rules_sass-1.25.0",
+    urls = [
+        "https://github.com/bazelbuild/rules_sass/archive/1.25.0.zip",
+        "https://mirror.bazel.build/github.com/bazelbuild/rules_sass/archive/1.25.0.zip",
+    ],
+)
+
+# Check the bazel version and download npm dependencies
+load("@build_bazel_rules_nodejs//:index.bzl", "yarn_install")
+
+# Setup the Node.js toolchain & install our npm dependencies into @npm
+yarn_install(
+    name = "npm",
+    package_json = "//:package.json",
+    yarn_lock = "//:yarn.lock",
+)
+
+# Install all bazel dependencies of our npm packages
+load("@npm//:install_bazel_dependencies.bzl", "install_bazel_dependencies")
+
+install_bazel_dependencies()
+
+# Load npm_bazel_protractor dependencies
+load("@npm_bazel_protractor//:package.bzl", "npm_bazel_protractor_dependencies")
+
+npm_bazel_protractor_dependencies()
+
+# Load npm_bazel_karma dependencies
+load("@npm_bazel_karma//:package.bzl", "npm_bazel_karma_dependencies")
+
+npm_bazel_karma_dependencies()
+
+# Setup the rules_webtesting toolchain
+load("@io_bazel_rules_webtesting//web:repositories.bzl", "web_test_repositories")
+
+web_test_repositories()
+
+load("@io_bazel_rules_webtesting//web/versioned:browsers-0.3.2.bzl", "browser_repositories")
+
+browser_repositories(
+    chromium = True,
+    firefox = True,
+)
+
+# Setup the rules_typescript tooolchain
+load("@npm_bazel_typescript//:index.bzl", "ts_setup_workspace")
+
+ts_setup_workspace()
+
+# Setup the rules_sass toolchain
+load("@io_bazel_rules_sass//sass:sass_repositories.bzl", "sass_repositories")
+
+sass_repositories()
+
+################################
+# Support for Remote Execution #
+################################
+
+http_archive(
+    name = "bazel_toolchains",
+    sha256 = "1342f84d4324987f63307eb6a5aac2dff6d27967860a129f5cd40f8f9b6fd7dd",
+    strip_prefix = "bazel-toolchains-2.2.0",
+    urls = [
+        "https://mirror.bazel.build/github.com/bazelbuild/bazel-toolchains/releases/download/2.2.0/bazel-toolchains-2.2.0.tar.gz",
+        "https://github.com/bazelbuild/bazel-toolchains/releases/download/2.2.0/bazel-toolchains-2.2.0.tar.gz",
+    ],
+)
+
+####################################################
+# Support creating Docker images for our node apps #
+####################################################
+
+http_archive(
+    name = "io_bazel_rules_docker",
+    patches = ["//:rules_docker.patch"],
+    sha256 = "7d453450e1eb70e238eea6b31f4115607ec1200e91afea01c25f9804f37e39c8",
+    strip_prefix = "rules_docker-0.10.0",
+    urls = ["https://github.com/bazelbuild/rules_docker/archive/v0.10.0.tar.gz"],
+)
+
+load("@io_bazel_rules_docker//repositories:repositories.bzl", container_repositories = "repositories")
+
+container_repositories()
+
+load("@io_bazel_rules_docker//nodejs:image.bzl", nodejs_image_repos = "repositories")
+
+nodejs_image_repos()
+
+####################################################
+# Kubernetes setup, for deployment to Google Cloud #
+####################################################
+
+git_repository(
+    name = "io_bazel_rules_k8s",
+    commit = "36ae5b534cc51ab0815c9bc723760469a9f7175c",
+    remote = "https://github.com/bazelbuild/rules_k8s.git",
+    shallow_since = "1545317854 -0500",
+)
+
+load("@io_bazel_rules_k8s//k8s:k8s.bzl", "k8s_defaults", "k8s_repositories")
+
+k8s_repositories()
+
+k8s_defaults(
+    # This creates a rule called "k8s_deploy" that we can call later
+    name = "k8s_deploy",
+    # This is the name of the cluster as it appears in:
+    #   kubectl config view --minify -o=jsonpath='{.contexts[0].context.cluster}'
+    cluster = "_".join([
+        "gke",
+        "internal-200822",
+        "us-west1-a",
+        "angular-bazel-example",
+    ]),
+    kind = "deployment",
+)
+
+####################################################
+# Go setup, for the web server
+####################################################
+
+http_archive(
+    name = "io_bazel_rules_go",
+    urls = [
+        "https://mirror.bazel.build/github.com/bazelbuild/rules_go/releases/download/v0.22.1/rules_go-v0.22.1.tar.gz",
+        "https://github.com/bazelbuild/rules_go/releases/download/v0.22.1/rules_go-v0.22.1.tar.gz",
+    ],
+    sha256 = "e6a6c016b0663e06fa5fccf1cd8152eab8aa8180c583ec20c872f4f9953a7ac5",
+)
+
+load("@io_bazel_rules_go//go:deps.bzl", "go_rules_dependencies", "go_register_toolchains")
+
+go_rules_dependencies()
+
+go_register_toolchains()
+
+http_archive(
+    name = "bazel_gazelle",
+    urls = [
+        "https://storage.googleapis.com/bazel-mirror/github.com/bazelbuild/bazel-gazelle/releases/download/v0.20.0/bazel-gazelle-v0.20.0.tar.gz",
+        "https://github.com/bazelbuild/bazel-gazelle/releases/download/v0.20.0/bazel-gazelle-v0.20.0.tar.gz",
+    ],
+    sha256 = "d8c45ee70ec39a57e7a05e5027c32b1576cc7f16d9dd37135b0eddde45cf1b10",
+)
+
+load("@bazel_gazelle//:deps.bzl", "gazelle_dependencies", "go_repository")
+
+gazelle_dependencies()
+
+# See https://github.com/bazelbuild/rules_go/blob/4a42b4092abdc60d14419a79afaec3659fbceb26/go/workspace.rst#id8
+go_repository(
+    name = "org_golang_google_grpc",
+    build_file_proto_mode = "disable",
+    importpath = "google.golang.org/grpc",
+    sum = "h1:J0UbZOIrCAl+fpTOf8YLs4dJo8L/owV4LYVtAXQoPkw=",
+    version = "v1.22.0",
+)
+
+go_repository(
+    name = "org_golang_x_net",
+    importpath = "golang.org/x/net",
+    sum = "h1:oWX7TPOiFAMXLq8o0ikBYfCJVlRHBcsciT5bXOrH628=",
+    version = "v0.0.0-20190311183353-d8887717615a",
+)
+
+go_repository(
+    name = "org_golang_x_text",
+    importpath = "golang.org/x/text",
+    sum = "h1:g61tztE5qeGQ89tm6NTjjM9VPIm088od1l6aSorWRWg=",
+    version = "v0.3.0",
+)
+
+# See https://github.com/bazelbuild/rules_go/blob/4a42b4092abdc60d14419a79afaec3659fbceb26/go/workspace.rst#id7
+git_repository(
+    name = "com_google_protobuf",
+    commit = "09745575a923640154bcf307fba8aedff47f240a",
+    remote = "https://github.com/protocolbuffers/protobuf",
+    shallow_since = "1558721209 -0700",
+)
+
+load("@com_google_protobuf//:protobuf_deps.bzl", "protobuf_deps")
+
+protobuf_deps()
+
+# We use git_repository since Renovate knows how to update it.
+# With http_archive it only sees releases/download/*.tar.gz urls
+git_repository(
+    name = "build_bazel_rules_typescript",
+    commit = "10a5a86885f95ab788fd841ade47b6a16e0c13d6",
+    remote = "http://github.com/bazelbuild/rules_typescript.git",
+    shallow_since = "1582757372 -0800",
+)
+# for some reason, gazelle:repository go_repository name=build_bazel_rules_typescript importpath=github.com/bazelbuild/rules_typescript
+# does not seem to work
+
+# See https://github.com/Dig-Doug/rules_typescript_proto
+http_archive(
+    name = "rules_proto",
+    sha256 = "602e7161d9195e50246177e7c55b2f39950a9cf7366f74ed5f22fd45750cd208",
+    strip_prefix = "rules_proto-97d8af4dc474595af3900dd85cb3a29ad28cc313",
+    urls = [
+        "https://mirror.bazel.build/github.com/bazelbuild/rules_proto/archive/97d8af4dc474595af3900dd85cb3a29ad28cc313.tar.gz",
+        "https://github.com/bazelbuild/rules_proto/archive/97d8af4dc474595af3900dd85cb3a29ad28cc313.tar.gz",
+    ],
+)
+
+load("@rules_proto//proto:repositories.bzl", "rules_proto_dependencies", "rules_proto_toolchains")
+
+rules_proto_dependencies()
+
+rules_proto_toolchains()
+
+# git_repository(
+#     name = "rules_typescript_proto",
+#     commit = "dcb4e24d4c4ed6b1687f0d8e57533c69b4fb8844",
+#     remote = "https://github.com/kellycampbell/rules_typescript_proto",
+# )
+
+# git_repository(
+#     name = "rules_typescript_proto",
+#     commit = "2cdf0a6cbce00bce01e18a7e2f05bfca39725ca2",
+#     remote = "https://github.com/Dig-Doug/rules_typescript_proto",
+# )
+
+git_repository(
+    name = "rules_typescript_proto",
+    commit = "41da6ce1735605ba3ef32b1498550cd3e3181667",
+    remote = "https://github.com/gonzojive/rules_typescript_proto",
+)
+
+load("@rules_typescript_proto//:index.bzl", "rules_typescript_proto_dependencies")
+
+rules_typescript_proto_dependencies()
+
+go_repository(
+    name = "com_github_golang_glog",
+    importpath = "github.com/golang/glog",
+    sum = "h1:VKtxabqXZkF25pY9ekfRL6a582T4P37/31XEstQ5p58=",
+    version = "v0.0.0-20160126235308-23def4e6c14b",
+)
