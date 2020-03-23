@@ -851,7 +851,7 @@
   dependencies:
     tmp "0.1.0"
 
-"@bazel/labs@file:../../rules_nodejs2/dist/bin/packages/labs/npm_package":
+"@bazel/labs@file:local_labs_npm_prebuilt":
   version "0.0.0"
 
 "@bazel/protractor@^1.4.1":
