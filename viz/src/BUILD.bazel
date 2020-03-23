@@ -83,7 +83,7 @@ _ASSETS = [
     # imports from it.
     "@npm//:node_modules/zone.js/dist/zone.min.js",
     # I don't know why this works, and I don't know how to navigate to it.
-    #":plotly-mapbox-latest.min.js",
+    ":plotly-mapbox-latest.min.js",
 ]
 
 html_insert_assets(
@@ -128,6 +128,7 @@ ts_devserver(
         # rule that is setup by yarn_install.
         "@npm//date-fns:date-fns.umd.js",
         #"@npm//plotly.js-mapbox-dist",
+        "@npm_bazel_labs//grpc_web:bootstrap_scripts",
     ],
     # Serve these files in addition to the JavaScript bundle
     static_files = _ASSETS + [

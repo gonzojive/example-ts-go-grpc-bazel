@@ -3,11 +3,11 @@ import {RouterModule} from '@angular/router';
 import { CommonModule } from '@angular/common';
 
 import { PlotlyViaWindowModule } from 'angular-plotly.js';
-import { Plotly } from 'angular-plotly.js/src/app/shared/plotly.interface';
-import * as fepb from 'examples_angular/httpserver/frontendpb/frontend_pb';
+//import { Plotly } from 'angular-plotly.js/src/app/shared/plotly.interface';
+//import * as fepb from 'examples_angular/httpserver/frontendpb/frontend_pb';
 //import * as feservice from 'examples_angular/httpserver/frontendpb/frontend_pb_service';
 import * as feservice from 'examples_angular/httpserver/frontendpb/frontend_grpc_web_pb';
-import * as xx from 'google-protobuf';
+//import * as xx from 'google-protobuf';
 
 
 @Component({
@@ -24,8 +24,9 @@ export class Home {
   };
 
   ngOnInit() {
+    console.log("client class: %o", feservice.FrontendServicePromiseClient);
     const client: feservice.FrontendServicePromiseClient = new feservice.FrontendServicePromiseClient('localhost:8311');
-    console.log("initialized client: %o", client);
+    console.log("client object: %o", client);
   }
 }
 
