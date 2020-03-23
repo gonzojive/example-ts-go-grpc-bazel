@@ -42,7 +42,7 @@
         "@bazel/buildifier": "^0.29.0",
         "@bazel/ibazel": "^0.12.2",
         "@bazel/karma": "^1.4.1",
-        "@bazel/labs": "^1.4.1",
+        "@bazel/labs": "file:/home/red/git/rules_nodejs2/packages/labs/../../dist/bin/packages/labs/npm_package",
         "@bazel/protractor": "^1.4.1",
         "@bazel/rollup": "^1.4.1",
         "@bazel/terser": "^1.4.1",

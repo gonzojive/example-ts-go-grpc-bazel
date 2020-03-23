@@ -1,5 +1,5 @@
-load("@io_bazel_rules_go//go:def.bzl", "go_library")
-load("@io_bazel_rules_go//proto:def.bzl", "go_proto_library")
+# load("@io_bazel_rules_go//go:def.bzl", "go_library")
+# load("@io_bazel_rules_go//proto:def.bzl", "go_proto_library")
 #load("@rules_typescript_proto//:index.bzl", "typescript_proto_library")
 #load("@npm_bazel_typescript//:index.bzl", "ts_library", "ts_proto_library")
 load("@npm_bazel_labs//:index.bzl", "ts_proto_library")
@@ -11,20 +11,20 @@ proto_library(
     visibility = ["//visibility:public"],
 )
 
-go_proto_library(
-    name = "frontendpb_go_proto",
-    compilers = ["@io_bazel_rules_go//proto:go_grpc"],
-    importpath = "github.com/gonzojive/energy-costs/web/viz/httpserver/frontendpb",
-    proto = ":frontendpb_proto",
-    visibility = ["//visibility:public"],
-)
+# go_proto_library(
+#     name = "frontendpb_go_proto",
+#     compilers = ["@io_bazel_rules_go//proto:go_grpc"],
+#     importpath = "github.com/gonzojive/energy-costs/web/viz/httpserver/frontendpb",
+#     proto = ":frontendpb_proto",
+#     visibility = ["//visibility:public"],
+# )
 
-go_library(
-    name = "go_default_library",
-    embed = [":frontendpb_go_proto"],
-    importpath = "github.com/gonzojive/energy-costs/web/viz/httpserver/frontendpb",
-    visibility = ["//visibility:public"],
-)
+# go_library(
+#     name = "go_default_library",
+#     embed = [":frontendpb_go_proto"],
+#     importpath = "github.com/gonzojive/energy-costs/web/viz/httpserver/frontendpb",
+#     visibility = ["//visibility:public"],
+# )
 
 # ts_proto_library(
 #     name = "frontendpb_ts_proto",
