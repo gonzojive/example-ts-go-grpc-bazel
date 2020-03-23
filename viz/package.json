@@ -24,6 +24,7 @@
         "plotly.js": "^1.52.3",
         "plotly.js-dist": "^1.52.3",
         "plotly.js-mapbox-dist": "^1.52.3",
+        "protobufjs": "^6.8.9",
         "rxjs": "6.5.3",
         "systemjs": "6.1.2",
         "tslib": "1.10.0",

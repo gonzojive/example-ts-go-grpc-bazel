@@ -36,6 +36,7 @@ ts_proto_library(
     # The result will be "car.d.ts" named after this target.
     # We could use the output_name attribute if we want the output named
     # differently than the target.
-    name = "car",
+    name = "frontendpb_ts_proto",
     proto = ":frontendpb_proto",
+    visibility = ["//visibility:public"],
 )

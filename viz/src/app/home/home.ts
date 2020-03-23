@@ -6,7 +6,7 @@ import { PlotlyViaWindowModule } from 'angular-plotly.js';
 import { Plotly } from 'angular-plotly.js/src/app/shared/plotly.interface';
 import * as fepb from 'examples_angular/httpserver/frontendpb/frontend_pb';
 //import * as feservice from 'examples_angular/httpserver/frontendpb/frontend_pb_service';
-import * as feservice from 'examples_angular/httpserver/frontendpb/frontend_pb_service';
+import * as feservice from 'examples_angular/httpserver/frontendpb/frontend_grpc_web_pb';
 import * as xx from 'google-protobuf';
 
 
@@ -24,8 +24,8 @@ export class Home {
   };
 
   ngOnInit() {
-    //console.log("initialized home comonent w/protobuf %o", xx);
-    const service: feservice.FrontendService = new feservice.FrontendService();
+    const client: feservice.FrontendServicePromiseClient = new feservice.FrontendServicePromiseClient('localhost:8311');
+    console.log("initialized client: %o", client);
   }
 }
 
