@@ -8,6 +8,18 @@ This doesn't work yet.
 
 **All of these commands should be run from the viz directory.**
 
+Run the devserver, get an error about failing to load dependencies:
+
+```shell
+bazel run //src:devserver
+```
+
+Error message:
+
+    Failed to load resource: the server responded with a status of 404 (Not Found)
+    zone.min.js:19 Uncaught Error: Script error for "google-protobuf", needed by: examples_angular/httpserver/frontendpb/frontend_pb
+        http://requirejs.org/docs/errors.html#scripterror
+
 Some commands:
 
 ```shell
