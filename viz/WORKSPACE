@@ -14,11 +14,44 @@ workspace(
 load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
-http_archive(
+local_repository(
     name = "build_bazel_rules_nodejs",
-    sha256 = "2eca5b934dee47b5ff304f502ae187c40ec4e33e12bcbce872a2eeb786e23269",
-    urls = ["https://github.com/bazelbuild/rules_nodejs/releases/download/1.4.1/rules_nodejs-1.4.1.tar.gz"],
+    path = "/home/red/git/rules_nodejs2",
+    # branch = "master",
 )
+
+load("@build_bazel_rules_nodejs//packages:index.bzl", "NESTED_PACKAGES")
+
+[local_repository(
+    name = "npm_bazel_%s" % name,
+    path = "/home/red/git/rules_nodejs2/packages/%s/src" % name,
+) for name in NESTED_PACKAGES]
+
+
+http_archive(
+    name = "rules_pkg",
+    url = "https://github.com/bazelbuild/rules_pkg/releases/download/0.2.5/rules_pkg-0.2.5.tar.gz",
+    sha256 = "352c090cc3d3f9a6b4e676cf42a6047c16824959b438895a76c2989c6d7c246a",
+)
+
+http_archive(
+    name = "rules_codeowners",
+    strip_prefix = "rules_codeowners-826b742ee0d6703736c8c4f45fd07d65315cf599",
+    sha256 = "64f64459b41201f7236880763e72de9384b237dfc44d61949520a2994bff18cd",
+    urls = [
+        "https://mirror.bazel.build/github.com/zegl/rules_codeowners/archive/826b742ee0d6703736c8c4f45fd07d65315cf599.zip",
+        "https://github.com/zegl/rules_codeowners/archive/826b742ee0d6703736c8c4f45fd07d65315cf599.zip",
+    ],
+)
+
+# http_archive(
+#      name = "build_bazel_rules_nodejs",
+#      sha256 = "2eca5b934dee47b5ff304f502ae187c40ec4e33e12bcbce872a2eeb786e23269",
+#      urls = ["https://github.com/bazelbuild/rules_nodejs/releases/download/1.4.1/rules_nodejs-1.4.1.tar.gz"],
+#      # Patch based on https://github.com/bazelbuild/rules_nodejs/blob/master/docs/index.md
+#      patch_args = ["-p1"],
+#      patches = ["//:latest_rules_nodejs.patch"],
+#  )
 
 http_archive(
     name = "com_google_protobuf",
@@ -47,6 +80,29 @@ yarn_install(
 load("@npm//:install_bazel_dependencies.bzl", "install_bazel_dependencies")
 
 install_bazel_dependencies()
+
+
+git_repository(
+    name = "build_bazel_rules_typescript",
+    commit = "10a5a86885f95ab788fd841ade47b6a16e0c13d6",
+    remote = "http://github.com/bazelbuild/rules_typescript.git",
+    patches = ["//:rules_typescript.patch"],
+)
+
+
+# We have a source dependency on build_bazel_rules_typescript
+# so we must repeat its transitive toolchain deps
+load("@build_bazel_rules_typescript//:package.bzl", "rules_typescript_dev_dependencies")
+rules_typescript_dev_dependencies()
+
+load("@bazel_gazelle//:deps.bzl", "gazelle_dependencies")
+load("@io_bazel_rules_go//go:deps.bzl", "go_register_toolchains", "go_rules_dependencies")
+
+gazelle_dependencies()
+
+go_rules_dependencies()
+
+go_register_toolchains()
 
 load("@npm_bazel_protractor//:package.bzl", "npm_bazel_protractor_dependencies")
 
@@ -84,3 +140,107 @@ ts_setup_workspace()
 load("@com_google_protobuf//:protobuf_deps.bzl", "protobuf_deps")
 
 protobuf_deps()
+
+
+# https://github.com/bazelbuild/rules_sass
+git_repository(
+    name = "io_bazel_rules_sass",
+    # Make sure to check for the latest version when you install
+    remote = "https://github.com/bazelbuild/rules_sass",
+    commit = "6750d31a0321e29a3e371d5d9dd78ca590ac965b",
+)
+
+# Fetch required transitive dependencies. This is an optional step because you
+# can always fetch the required NodeJS transitive dependency on your own.
+load("@io_bazel_rules_sass//:package.bzl", "rules_sass_dependencies")
+rules_sass_dependencies()
+
+# Setup repositories which are needed for the Sass rules.
+load("@io_bazel_rules_sass//:defs.bzl", "sass_repositories")
+sass_repositories()
+
+
+####################################################
+# Go setup, for the web server
+####################################################
+
+# http_archive(
+#     name = "io_bazel_rules_go",
+#     urls = [
+#         "https://mirror.bazel.build/github.com/bazelbuild/rules_go/releases/download/v0.22.2/rules_go-v0.22.2.tar.gz",
+#         "https://github.com/bazelbuild/rules_go/releases/download/v0.22.2/rules_go-v0.22.2.tar.gz",
+#     ],
+#     sha256 = "142dd33e38b563605f0d20e89d9ef9eda0fc3cb539a14be1bdb1350de2eda659",
+# )
+
+
+# http_archive(
+#     name = "bazel_gazelle",
+#     urls = [
+#         "https://storage.googleapis.com/bazel-mirror/github.com/bazelbuild/bazel-gazelle/releases/download/v0.20.0/bazel-gazelle-v0.20.0.tar.gz",
+#         "https://github.com/bazelbuild/bazel-gazelle/releases/download/v0.20.0/bazel-gazelle-v0.20.0.tar.gz",
+#     ],
+#     sha256 = "d8c45ee70ec39a57e7a05e5027c32b1576cc7f16d9dd37135b0eddde45cf1b10",
+# )
+
+# load("@io_bazel_rules_go//go:deps.bzl", "go_rules_dependencies", "go_register_toolchains")
+
+# go_rules_dependencies()
+
+# go_register_toolchains()
+
+load("@bazel_gazelle//:deps.bzl", "gazelle_dependencies", "go_repository")
+
+# gazelle_dependencies()
+
+# See https://github.com/bazelbuild/rules_go/blob/4a42b4092abdc60d14419a79afaec3659fbceb26/go/workspace.rst#id8
+# go_repository(
+#     name = "org_golang_google_grpc",
+#     build_file_proto_mode = "disable",
+#     importpath = "google.golang.org/grpc",
+#     sum = "h1:J0UbZOIrCAl+fpTOf8YLs4dJo8L/owV4LYVtAXQoPkw=",
+#     version = "v1.22.0",
+# )
+
+# go_repository(
+#     name = "org_golang_x_net",
+#     importpath = "golang.org/x/net",
+#     sum = "h1:oWX7TPOiFAMXLq8o0ikBYfCJVlRHBcsciT5bXOrH628=",
+#     version = "v0.0.0-20190311183353-d8887717615a",
+# )
+
+# go_repository(
+#     name = "org_golang_x_text",
+#     importpath = "golang.org/x/text",
+#     sum = "h1:g61tztE5qeGQ89tm6NTjjM9VPIm088od1l6aSorWRWg=",
+#     version = "v0.3.0",
+# )
+
+# # See https://github.com/bazelbuild/rules_go/blob/4a42b4092abdc60d14419a79afaec3659fbceb26/go/workspace.rst#id7
+# git_repository(
+#     name = "com_google_protobuf",
+#     commit = "09745575a923640154bcf307fba8aedff47f240a",
+#     remote = "https://github.com/protocolbuffers/protobuf",
+#     shallow_since = "1558721209 -0700",
+# )
+
+# for some reason, gazelle:repository go_repository name=build_bazel_rules_typescript importpath=github.com/bazelbuild/rules_typescript
+# does not seem to work
+
+# See https://github.com/Dig-Doug/rules_typescript_proto
+http_archive(
+    name = "rules_proto",
+    sha256 = "602e7161d9195e50246177e7c55b2f39950a9cf7366f74ed5f22fd45750cd208",
+    strip_prefix = "rules_proto-97d8af4dc474595af3900dd85cb3a29ad28cc313",
+    urls = [
+        "https://mirror.bazel.build/github.com/bazelbuild/rules_proto/archive/97d8af4dc474595af3900dd85cb3a29ad28cc313.tar.gz",
+        "https://github.com/bazelbuild/rules_proto/archive/97d8af4dc474595af3900dd85cb3a29ad28cc313.tar.gz",
+    ],
+)
+
+# go_repository(
+#     name = "com_github_golang_glog",
+#     importpath = "github.com/golang/glog",
+#     sum = "h1:VKtxabqXZkF25pY9ekfRL6a582T4P37/31XEstQ5p58=",
+#     version = "v0.0.0-20160126235308-23def4e6c14b",
+# )

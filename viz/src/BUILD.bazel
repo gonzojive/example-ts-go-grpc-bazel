@@ -1,6 +1,4 @@
 load("@build_bazel_rules_nodejs//:index.bzl", "pkg_web")
-load("@io_bazel_rules_docker//container:container.bzl", "container_image")
-load("@io_bazel_rules_docker//nodejs:image.bzl", "nodejs_image")
 load("@io_bazel_rules_sass//:defs.bzl", "sass_binary")
 load("@npm//@babel/cli:index.bzl", "babel")
 load("@npm//history-server:index.bzl", "history_server")
@@ -229,24 +227,4 @@ history_server(
         "-a",
         "src/prodapp",
     ],
-)
-
-nodejs_image(
-    name = "nodejs_image",
-    data = [":prodapp"],
-    entry_point = "@npm//:node_modules/history-server/modules/cli.js",
-    node_modules = "@npm//:node_modules",
-    # Actions created by this rule are I/O-bound,
-    # so there is no benefit to running them remotely
-    tags = ["local"],
-    templated_args = ["src/prodapp"],
-)
-
-container_image(
-    name = "image",
-    base = ":nodejs_image",
-    # Actions created by this rule are I/O-bound,
-    # so there is no benefit to running them remotely
-    tags = ["local"],
-    workdir = "/app/src/nodejs_image.binary.runfiles/examples_angular",
 )
