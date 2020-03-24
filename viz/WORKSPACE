@@ -16,7 +16,7 @@ load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
 http_archive(
     name = "build_bazel_rules_nodejs",
-    urls = ["file:///home/red/lib/rules_nodejs_head/release.tar.gz",]
+    urls = ["file:///home/red/lib/rules_nodejs_head/release.tar.gz"],
 )
 
 http_archive(
@@ -116,7 +116,6 @@ load("@bazel_gazelle//:deps.bzl", "gazelle_dependencies", "go_repository")
 
 gazelle_dependencies()
 
-
 # See https://github.com/bazelbuild/rules_go/blob/4a42b4092abdc60d14419a79afaec3659fbceb26/go/workspace.rst#id8
 go_repository(
     name = "org_golang_google_grpc",
@@ -150,7 +149,27 @@ http_archive(
         "https://mirror.bazel.build/github.com/bazelbuild/rules_sass/archive/1.25.0.zip",
     ],
 )
+
 # Setup the rules_sass toolchain
 load("@io_bazel_rules_sass//sass:sass_repositories.bzl", "sass_repositories")
 
 sass_repositories()
+
+# git_repository(
+#     name = "build_bazel_rules_typescript",
+#     commit = "10a5a86885f95ab788fd841ade47b6a16e0c13d6",
+#     remote = "http://github.com/bazelbuild/rules_typescript.git",
+#     shallow_since = "1582757372 -0800",
+# )
+
+local_repository(
+    name = "build_bazel_rules_typescript",
+    path = "/home/red/git/rules_typescript",
+)
+
+go_repository(
+    name = "com_github_golang_glog",
+    importpath = "github.com/golang/glog",
+    sum = "h1:VKtxabqXZkF25pY9ekfRL6a582T4P37/31XEstQ5p58=",
+    version = "v0.0.0-20160126235308-23def4e6c14b",
+)

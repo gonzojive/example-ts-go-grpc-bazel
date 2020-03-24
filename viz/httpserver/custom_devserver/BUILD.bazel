@@ -3,6 +3,7 @@ load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
 # gazelle:resolve go go github.com/bazelbuild/rules_typescript/devserver/concatjs @build_bazel_rules_typescript//devserver/concatjs:go_default_library
 # gazelle:resolve go go github.com/bazelbuild/rules_typescript/devserver/devserver @build_bazel_rules_typescript//devserver/devserver:go_default_library
 # gazelle:resolve go go github.com/bazelbuild/rules_typescript/devserver/runfiles @build_bazel_rules_typescript//devserver/runfiles:go_default_library
+# gazelle:resolve go go github.com/bazelbuild/rules_go/go/tools/bazel @io_bazel_rules_go//go/tools/bazel:go_default_library
 go_library(
     name = "go_default_library",
     srcs = ["custom_devserver.go"],
@@ -13,6 +14,7 @@ go_library(
         "@build_bazel_rules_typescript//devserver/devserver:go_default_library",
         "@build_bazel_rules_typescript//devserver/runfiles:go_default_library",
         "@com_github_golang_glog//:go_default_library",
+        "@io_bazel_rules_go//go/tools/bazel:go_default_library",
     ],
 )
 

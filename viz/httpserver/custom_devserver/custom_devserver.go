@@ -8,39 +8,17 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"path"
 	"path/filepath"
 	"strings"
 	"time"
 
+	"github.com/bazelbuild/rules_go/go/tools/bazel"
 	"github.com/bazelbuild/rules_typescript/devserver/concatjs"
 	"github.com/bazelbuild/rules_typescript/devserver/devserver"
 	"github.com/bazelbuild/rules_typescript/devserver/runfiles"
 	"github.com/golang/glog"
 )
-
-// RunfileFileSystem implements FileSystem type from concatjs.
-type RunfileFileSystem struct{}
-
-// StatMtime gets the filestamp for the last file modification.
-func (fs *RunfileFileSystem) StatMtime(filename string) (time.Time, error) {
-	s, err := os.Stat(filename)
-	if err != nil {
-		return time.Time{}, err
-	}
-	return s.ModTime(), nil
-}
-
-// ReadFile reads a file given its file name
-func (fs *RunfileFileSystem) ReadFile(filename string) ([]byte, error) {
-	return ioutil.ReadFile(filename)
-}
-
-// ResolvePath resolves the specified path within a given root using Bazel's runfile resolution.
-// This is necessary because on Windows, runfiles are not symlinked and need to be
-// resolved using the runfile manifest file.
-func (fs *RunfileFileSystem) ResolvePath(root string, manifestFilePath string) (string, error) {
-	return runfiles.Runfile(root, manifestFilePath)
-}
 
 var (
 	port = flag.Int("port", 5432, "server port to listen on")
@@ -72,7 +50,8 @@ func main() {
 			glog.Fatalf("failed to get absolute path to --base %q: %v", *base, err)
 		}
 
-		glog.Infof("Using runfiles at base %q (abs = %q), scripts_manifest %q and manifest %q ", *base, baseAbs, *scriptsManifest, *manifest)
+		glog.Infof("Using runfiles at \n  base %q (abs = %q),\n  scripts_manifest %q\n  manifest %q ", *base, baseAbs, *scriptsManifest, *manifest)
+		glog.Infof("RUNFILES_MANIFEST_FILE: %q", os.Getenv("RUNFILES_MANIFEST_FILE"))
 	}
 	manifestPath, err := runfiles.Runfile(correctedBase, *scriptsManifest)
 
@@ -206,4 +185,104 @@ func manifestFilesFromReader(r io.Reader) ([]string, error) {
 	}
 
 	return lines, nil
+}
+
+// RunfileFileSystem implements FileSystem type from concatjs.
+type RunfileFileSystem struct{}
+
+// StatMtime gets the filestamp for the last file modification.
+func (fs *RunfileFileSystem) StatMtime(filename string) (time.Time, error) {
+	s, err := os.Stat(filename)
+	if err != nil {
+		return time.Time{}, err
+	}
+	return s.ModTime(), nil
+}
+
+// ReadFile reads a file given its file name
+func (fs *RunfileFileSystem) ReadFile(filename string) ([]byte, error) {
+	return ioutil.ReadFile(filename)
+}
+
+// ResolvePath resolves the specified path within a given root using Bazel's runfile resolution.
+// This is necessary because on Windows, runfiles are not symlinked and need to be
+// resolved using the runfile manifest file.
+func (fs *RunfileFileSystem) ResolvePath(root string, manifestFilePath string) (string, error) {
+	runfileEntries, err := bazel.ListRunfiles()
+	if err != nil {
+		return "", err
+	}
+	// See https://github.com/bazelbuild/rules_nodejs/blob/master/packages/typescript/src/internal/devserver/ts_devserver.bzl#L59
+	// All manifest files are relative to a workspace, so parse out the workspace name
+	// and use this to look up the corresponding runfile.
+	workspace, shortName, err := splitWorkspaceShortName(manifestFilePath)
+	if err != nil {
+		return "", fs.suggestIntendedRunfile(err, manifestFilePath)
+	}
+
+	knownWorkspaces := make(map[string]bool)
+	for _, entry := range runfileEntries {
+		knownWorkspaces[entry.Workspace] = true
+		if entry.Workspace != workspace {
+			continue
+		}
+		if entry.ShortPath != shortName {
+			continue
+		}
+		return entry.Path, nil
+	}
+	if !knownWorkspaces[workspace] {
+		return "", fs.suggestIntendedRunfile(fmt.Errorf("workspace %q not found in workspaces of known runfiles %v (short name %s)", workspace, knownWorkspaces, shortName), manifestFilePath)
+	}
+	return "", fs.suggestIntendedRunfile(fmt.Errorf("could not find runfile (%q, %q)", workspace, shortName), manifestFilePath)
+}
+
+func (fs *RunfileFileSystem) suggestIntendedRunfile(originalErr error, manifestFilePath string) error {
+	return originalErr
+}
+
+func splitWorkspaceShortName(manifestPath string) (workspace, shortName string, err error) {
+	manifestPath = path.Clean(manifestPath)
+	parts := strings.SplitN(manifestPath, "/", 2)
+	if len(parts) != 2 {
+		return "", "", fmt.Errorf("manifest file path should have form <workspace>/<short path>, found no slash: %q", manifestPath)
+	}
+	// if trimmed := strings.TrimPrefix(parts[1], "../"); trimmed != parts[1] {
+	// 	return splitWorkspaceShortName(trimmed)
+	// }
+	return parts[0], parts[1], nil
+}
+
+func findClosestRunfileEntry(manifestPath string, runfileEntries []bazel.RunfileEntry) *bazel.RunfileEntry {
+	var best *bazel.RunfileEntry
+	longestSharedSuffix := ""
+	for _, rfe := range runfileEntries {
+		if suf := sharedSuffix(manifestPath, rfe.Path); len(suf) > len(longestSharedSuffix) {
+			longestSharedSuffix = suf
+			rfe := rfe
+			best = &rfe
+			if len(suf) == len(manifestPath) {
+				break
+			}
+		}
+	}
+	if len(manifestPath) > 0 && (float64(len(longestSharedSuffix))/float64(len(manifestPath))) > .40 {
+		return best
+	}
+	return nil
+}
+
+func sharedSuffix(a, b string) string {
+	posA, posB := len(a), len(b)
+	for {
+		if posA == 0 || posB == 0 {
+			break
+		}
+		if a[posA-1] != b[posB-1] {
+			break
+		}
+		posA--
+		posB--
+	}
+	return a[posA:]
 }
