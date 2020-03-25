@@ -154,7 +154,7 @@ func main() {
 		if r.ProtoMajor == 2 && strings.HasPrefix(r.Header.Get("Content-Type"), "application/grpc") {
 			glog.Infof("got gRPC request %q", r.URL)
 			grpcServer.ServeHTTP(rw, r)
-		} else if wrappedServer.IsGrpcWebRequest(r) || r.Header.Get("X-Grpc-Web") == "1" {
+		} else if wrappedServer.IsGrpcWebRequest(r) {
 			glog.Infof("got gRPC web request %q", r.URL)
 			wrappedServer.HandleGrpcWebRequest(rw, r)
 		} else {
