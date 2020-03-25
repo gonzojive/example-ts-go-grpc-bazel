@@ -43,3 +43,10 @@ bazel run //:gazelle update-repos google.com/protobuf
 ```shell
 bazel aquery @npm//google-protobuf:all --output=textproto
 ```
+
+Regenerate frontendpb.pb.go (for editor auto completion, not needed for Bazel
+compilation).
+
+```shell
+protoc --go_out=plugins=grpc,paths=source_relative:. httpserver/frontendpb/*.proto
+```
