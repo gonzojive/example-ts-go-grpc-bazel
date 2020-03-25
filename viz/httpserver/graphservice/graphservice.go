@@ -1,6 +1,8 @@
 package graphservice
 
-import pb "github.com/gonzojive/example-ts-go-grcp-bazel/viz/httpserver/frontendpb"
+import (
+	pb "github.com/gonzojive/example-ts-go-grpc-bazel/viz/httpserver/frontendpb"
+)
 
 type Service struct {}
 

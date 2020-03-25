@@ -12,7 +12,6 @@ go_library(
     deps = [
         "@build_bazel_rules_typescript//devserver/concatjs:go_default_library",
         "@build_bazel_rules_typescript//devserver/devserver:go_default_library",
-        "@build_bazel_rules_typescript//devserver/runfiles:go_default_library",
         "@com_github_golang_glog//:go_default_library",
         "@io_bazel_rules_go//go/tools/bazel:go_default_library",
     ],

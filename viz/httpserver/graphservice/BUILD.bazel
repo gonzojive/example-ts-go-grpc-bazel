@@ -1,0 +1,9 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = ["graphservice.go"],
+    importpath = "github.com/gonzojive/example-ts-go-grpc-bazel/viz/httpserver/graphservice",
+    visibility = ["//visibility:public"],
+    deps = ["//httpserver/frontendpb:go_default_library"],
+)
