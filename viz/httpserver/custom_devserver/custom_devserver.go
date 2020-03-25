@@ -16,7 +16,6 @@ import (
 	"github.com/bazelbuild/rules_go/go/tools/bazel"
 	"github.com/bazelbuild/rules_typescript/devserver/concatjs"
 	"github.com/bazelbuild/rules_typescript/devserver/devserver"
-	"github.com/bazelbuild/rules_typescript/devserver/runfiles"
 	"github.com/golang/glog"
 )
 
@@ -52,8 +51,9 @@ func main() {
 
 		glog.Infof("Using runfiles at \n  base %q (abs = %q),\n  scripts_manifest %q\n  manifest %q ", *base, baseAbs, *scriptsManifest, *manifest)
 		glog.Infof("RUNFILES_MANIFEST_FILE: %q", os.Getenv("RUNFILES_MANIFEST_FILE"))
+		glog.Infof("--packages: %q", *pkgs)
 	}
-	manifestPath, err := runfiles.Runfile(correctedBase, *scriptsManifest)
+	manifestPath, err := bazel.Runfile(*scriptsManifest)
 
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to find scripts_manifest in runfiles: %v\n", err)
@@ -76,14 +76,14 @@ func main() {
 	postScripts := make([]string, 0, 1)
 
 	// Include the livereload script if IBAZEL_LIVERELOAD_URL is set.
-	livereloadUrl := os.Getenv("IBAZEL_LIVERELOAD_URL")
-	if livereloadUrl != "" {
-		fmt.Printf("Serving livereload script from %s\n", livereloadUrl)
+	livereloadURL := os.Getenv("IBAZEL_LIVERELOAD_URL")
+	if livereloadURL != "" {
+		fmt.Printf("Serving livereload script from %s\n", livereloadURL)
 		livereloadLoaderSnippet := fmt.Sprintf(`(function(){
 	const script = document.createElement('script');
 	script.src = "%s";
 	document.head.appendChild(script);
-})();`, livereloadUrl)
+})();`, livereloadURL)
 		preScripts = append(preScripts, livereloadLoaderSnippet)
 	}
 
@@ -100,15 +100,16 @@ func main() {
 	}
 
 	correctScriptFilePath := func(scriptPath string) string {
-		return filepath.Join("..", scriptPath)
+		return path.Clean(scriptPath)
 	}
 
 	// Include all user scripts in preScripts. This should always include
 	// the requirejs script which is added to scriptFiles by the devserver
 	// skylark rule.
+	runfileFS := &RunfileFileSystem{}
 	for _, scriptFile := range scriptFiles {
 		scriptFile = correctScriptFilePath(scriptFile)
-		runfile, err := runfiles.Runfile(correctedBase, scriptFile)
+		runfile, err := runfileFS.ResolvePath(correctedBase, scriptFile)
 		if err != nil {
 			glog.Errorf("Could not find runfile %s, got error %s", scriptFile, err)
 			if *strictLoading {
@@ -122,6 +123,7 @@ func main() {
 		} else {
 			preScripts = append(preScripts, js)
 		}
+		glog.Infof("Loaded %d-byte prescript %q, got error %v", len(js), scriptFile, err)
 	}
 
 	// If the entryModule is set then add a snippet to load
@@ -130,10 +132,15 @@ func main() {
 		postScripts = append(postScripts, fmt.Sprintf("require([\"%s\"]);", *entryModule))
 	}
 
+	fs := &RunfileFileSystem{}
 	http.Handle(*servingPath, concatjs.ServeConcatenatedJS(*manifest, correctedBase, preScripts, postScripts,
 		&RunfileFileSystem{}))
 	pkgList := strings.Split(*pkgs, ",")
-	http.HandleFunc("/", devserver.CreateFileHandler(*servingPath, *manifest, pkgList, correctedBase))
+	runfileResolverOpt := devserver.RunfileResolver(fs.ResolvePath)
+	http.HandleFunc("/", devserver.CreateFileHandler(*servingPath, *manifest, pkgList, correctedBase, runfileResolverOpt))
+	// http.HandleFunc("/runfile", func(rw http.ResponseWriter, r *http.Request) {
+	// 	http.FileServer(root FileSystem)
+	// })
 
 	h, err := os.Hostname()
 	if err != nil {
@@ -187,6 +194,12 @@ func manifestFilesFromReader(r io.Reader) ([]string, error) {
 	return lines, nil
 }
 
+type runfileHTPFileSystem struct{}
+
+func (fs *runfileHTPFileSystem) Open(name string) (http.File, error) {
+	return nil, nil
+}
+
 // RunfileFileSystem implements FileSystem type from concatjs.
 type RunfileFileSystem struct{}
 
@@ -232,6 +245,8 @@ func (fs *RunfileFileSystem) ResolvePath(root string, manifestFilePath string) (
 		return entry.Path, nil
 	}
 	if !knownWorkspaces[workspace] {
+		glog.Errorf("workspace %q not found in workspaces of known runfiles %v (short name %s)", workspace, knownWorkspaces, shortName)
+
 		return "", fs.suggestIntendedRunfile(fmt.Errorf("workspace %q not found in workspaces of known runfiles %v (short name %s)", workspace, knownWorkspaces, shortName), manifestFilePath)
 	}
 	return "", fs.suggestIntendedRunfile(fmt.Errorf("could not find runfile (%q, %q)", workspace, shortName), manifestFilePath)
@@ -247,9 +262,6 @@ func splitWorkspaceShortName(manifestPath string) (workspace, shortName string, 
 	if len(parts) != 2 {
 		return "", "", fmt.Errorf("manifest file path should have form <workspace>/<short path>, found no slash: %q", manifestPath)
 	}
-	// if trimmed := strings.TrimPrefix(parts[1], "../"); trimmed != parts[1] {
-	// 	return splitWorkspaceShortName(trimmed)
-	// }
 	return parts[0], parts[1], nil
 }
 

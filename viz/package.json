@@ -24,6 +24,7 @@
         "google-protobuf": "^3.11.4",
         "grpc-web": "^1.0.7",
         "plotly.js": "^1.52.3",
+        "plotly.js-basic-dist": "^1.52.3",
         "plotly.js-dist": "^1.52.3",
         "plotly.js-mapbox-dist": "^1.52.3",
         "protobufjs": "^6.8.9",

@@ -1,8 +1,8 @@
 syntax = "proto3";
 
-package energycosts.frontend;
+package example.frontend;
 
-option go_package = "github.com/gonzojive/energy-costs/web/viz/httpserver/frontendpb";
+option go_package = "github.com/gonzojive/example-ts-go-grpc-bazel/viz/httpserver/frontendpb";
 
 // import "google/protobuf/any.proto";
 // import "google/protobuf/timestamp.proto";
@@ -15,9 +15,21 @@ service FrontendService {
 }
 
 message GetGraphRequest {
-    string group_id = 1;
+    string seed = 1;
 }
 
 message GetGraphResponse {
+    repeated Trace traces = 1;
 }
 
+message Trace {
+    message Point {
+        double x = 1;
+        double y = 2;
+    }
+    repeated Point points = 1;
+
+    string plotly_type = 2;
+    string plotly_mode = 3;
+    string marker_color = 4;
+}

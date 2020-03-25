@@ -56,6 +56,7 @@ ng_module(
         "@npm//plotly.js-mapbox-dist",
         "@npm//@improbable-eng/grpc-web",
         "@npm//google-protobuf",
+        #"@npm//plotly.js-mapbox-dist:plotly.js-mapbox-dist__umd",
         #"@npm//google-protobuf:google-protobuf__umd",
     ],
 )
@@ -82,7 +83,9 @@ _ASSETS = [
     # zone.js is used, given that we don't have any import statement that
     # imports from it.
     "@npm//:node_modules/zone.js/dist/zone.min.js",
-    # I don't know why this works, and I don't know how to navigate to it.
+    # This is required because there is an error loading the plotly
+    # umd directly (https://github.com/plotly/plotly.js/issues/3518).
+    #":plotly-mapbox-latest.min.js",
     ":plotly-mapbox-latest.min.js",
 ]
 
@@ -95,6 +98,7 @@ html_insert_assets(
         "--roots=. $(RULEDIR)",
         "--assets",
     ] + ["$(execpath %s)" % s for s in _ASSETS] + [
+        # ["/runfile/$(rootpath %s)" % s for s in _ASSETS] + [
         # This file doesn't exist during the build, but will be served by ts_devserver
         "./_/ts_scripts.js",
     ],
@@ -129,12 +133,15 @@ ts_devserver(
         "@npm//date-fns:date-fns.umd.js",
         # "@npm//plotly.js-mapbox-dist",
         "@npm_bazel_labs//grpc_web:bootstrap_scripts",
+        #"@npm//plotly.js-mapbox-dist:plotly.js-mapbox-dist.umd.js",
+        #"@npm//plotly.js-basic-dist:plotly.js-basic-dist.umd.js",
+        #":plotly-mapbox-latest.min.js",
     ],
     # Serve these files in addition to the JavaScript bundle
     static_files = _ASSETS + [
         ":inject_scripts_for_dev",
         "//src/assets",
-        "@npm//plotly.js-mapbox-dist:plotly.js-mapbox-dist__files",
+        #"@npm//plotly.js-mapbox-dist:plotly.js-mapbox-dist__files",
     ],
     # Tell Bazel to build the sources first
     deps = ["//src"],
@@ -168,12 +175,15 @@ ts_devserver(
         "@npm//date-fns:date-fns.umd.js",
         #"@npm//plotly.js-mapbox-dist",
         "@npm_bazel_labs//grpc_web:bootstrap_scripts",
+        #"@npm//plotly.js-mapbox-dist:plotly.js-mapbox-dist",
+        #"@npm//plotly.js-basic-dist:plotly.js-basic-dist.umd.js",
+        #":plotly-mapbox-latest.min.js",
     ],
     # Serve these files in addition to the JavaScript bundle
     static_files = _ASSETS + [
         ":inject_scripts_for_dev",
         "//src/assets",
-        "@npm//plotly.js-mapbox-dist:plotly.js-mapbox-dist__files",
+        #"@npm//plotly.js-mapbox-dist:plotly.js-mapbox-dist__files",
     ],
     # Tell Bazel to build the sources first
     deps = ["//src"],

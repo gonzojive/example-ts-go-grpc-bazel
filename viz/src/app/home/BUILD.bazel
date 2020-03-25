@@ -16,6 +16,7 @@ ng_module(
         "@npm//angular-plotly.js",
         "@npm//plotly.js-dist",
         "@npm//plotly.js-mapbox-dist",
+        "@npm//plotly.js-basic-dist",
         "//httpserver/frontendpb:frontendpb_ts_proto",
         "@npm//@improbable-eng/grpc-web",
         "@npm//google-protobuf",
