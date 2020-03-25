@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"log"
+	"net"
 	"net/http"
 	"os"
 	"path"
@@ -17,6 +19,11 @@ import (
 	"github.com/bazelbuild/rules_typescript/devserver/concatjs"
 	"github.com/bazelbuild/rules_typescript/devserver/devserver"
 	"github.com/golang/glog"
+	"github.com/gonzojive/example-ts-go-grpc-bazel/viz/httpserver/frontendpb"
+	"github.com/gonzojive/example-ts-go-grpc-bazel/viz/httpserver/graphservice"
+	"google.golang.org/grpc"
+
+	"github.com/improbable-eng/grpc-web/go/grpcweb"
 )
 
 var (
@@ -34,6 +41,10 @@ var (
 
 func main() {
 	flag.Parse()
+
+	grpcServer := grpc.NewServer()
+	frontendpb.RegisterFrontendServiceServer(grpcServer, &graphservice.Service{})
+	wrappedServer := grpcweb.WrapServer(grpcServer, grpcweb.WithWebsockets(true))
 
 	//correctedBase := filepath.Join(*base, "..")
 	correctedBase := *base //filepath.Join(*base)
@@ -137,7 +148,20 @@ func main() {
 		&RunfileFileSystem{}))
 	pkgList := strings.Split(*pkgs, ",")
 	runfileResolverOpt := devserver.RunfileResolver(fs.ResolvePath)
-	http.HandleFunc("/", devserver.CreateFileHandler(*servingPath, *manifest, pkgList, correctedBase, runfileResolverOpt))
+	regularRootHandler := devserver.CreateFileHandler(*servingPath, *manifest, pkgList, correctedBase, runfileResolverOpt)
+	http.HandleFunc("/", func(rw http.ResponseWriter, r *http.Request) {
+		// Regular gRPC:
+		if r.ProtoMajor == 2 && strings.HasPrefix(r.Header.Get("Content-Type"), "application/grpc") {
+			glog.Infof("got gRPC request %q", r.URL)
+			grpcServer.ServeHTTP(rw, r)
+		} else if wrappedServer.IsGrpcWebRequest(r) || r.Header.Get("X-Grpc-Web") == "1" {
+			glog.Infof("got gRPC web request %q", r.URL)
+			wrappedServer.HandleGrpcWebRequest(rw, r)
+		} else {
+			glog.Infof("got normal web request %q", r.URL)
+			regularRootHandler.ServeHTTP(rw, r)
+		}
+	})
 	// http.HandleFunc("/runfile", func(rw http.ResponseWriter, r *http.Request) {
 	// 	http.FileServer(root FileSystem)
 	// })
@@ -153,8 +177,15 @@ func main() {
 		h = h + ".linux.test"
 	}
 
+	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", *port))
+	if err != nil {
+		log.Fatalf("failed to listen: %v", err)
+	}
+
 	fmt.Printf("Server listening on http://%s:%d/\n", h, *port)
-	fmt.Fprintln(os.Stderr, http.ListenAndServe(fmt.Sprintf(":%d", *port), nil).Error())
+
+	//fmt.Fprintln(os.Stderr, grpcServer.Serve(lis, nil).Error())
+	fmt.Fprintln(os.Stderr, http.Serve(lis, nil).Error())
 	os.Exit(1)
 }
 
@@ -298,3 +329,15 @@ func sharedSuffix(a, b string) string {
 	}
 	return a[posA:]
 }
+
+// func grpcTrafficSplitter(fallback http.HandlerFunc, grpcHandler http.Handler) http.HandlerFunc {
+// 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+// 		// Redirect gRPC and gRPC-Web requests to the gRPC Server
+// 		if strings.Contains(r.Header.Get("Content-Type"), "application/grpc") ||
+// 			websocket.IsWebSocketUpgrade(r) {
+// 			grpcHandler.ServeHTTP(w, r)
+// 		} else {
+// 			fallback(w, r)
+// 		}
+// 	})
+// }

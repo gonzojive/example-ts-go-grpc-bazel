@@ -15,7 +15,8 @@ service FrontendService {
 }
 
 message GetGraphRequest {
-    string seed = 1;
+    // Fctor by which to scale the result data.
+    double scale = 1;
 }
 
 message GetGraphResponse {

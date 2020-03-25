@@ -4,68 +4,57 @@ import { CommonModule } from '@angular/common';
 
 import { PlotlyViaWindowModule } from 'angular-plotly.js';
 import { Plotly } from 'angular-plotly.js/src/app/shared/plotly.interface';
-//import { Plotly } from 'plotly.js-mapbox-dist';
-//import { Plotly } from 'plotly.js-basic-dist';
-//import * as fepb from 'examples_angular/httpserver/frontendpb/frontend_pb';
-//import * as feservice from 'examples_angular/httpserver/frontendpb/frontend_pb_service';
 import * as feservice from 'examples_angular/httpserver/frontendpb/frontend_grpc_web_pb';
 import { GetGraphRequest, GetGraphResponse } from 'examples_angular/httpserver/frontendpb/frontend_pb';
-//import * as xx from 'google-protobuf';
-
-//PlotlyModule.plotlyjs = Plotly;
-
-
-const GRAPH2 = {
-  data: [
-      { x: [1, 2, 3], y: [2, 1, 1], type: 'scatter', mode: 'lines+points', marker: {color: 'purple'} },
-      { x: [1, 2, 3], y: [2, 5, 3], type: 'bar' },
-  ],
-  layout: {autosize: true, title: 'A Fancy Plot'}
-};
-
-const GRAPH_SUCCESS = {
-  data: [
-      { x: [1, 2, 3], y: [2, 1, 1], type: 'scatter', mode: 'lines+points', marker: {color: 'green'} },
-      { x: [1, 2, 3], y: [2, 5, 3], type: 'bar' },
-  ],
-  layout: {autosize: true, title: 'A Fancy Plot'}
-};
 
 @Component({
   selector: 'home',
   templateUrl: './home.html',
 })
 export class Home {
-  public graph = {
+  public graph: Plotly.Figure = {
     data: [
         { x: [1, 2, 3], y: [2, 6, 3], type: 'scatter', mode: 'lines+points', marker: {color: 'red'} },
         { x: [1, 2, 3], y: [2, 5, 3], type: 'bar' },
     ],
-    layout: {autosize: true, title: 'A Fancy Plot'}
+    layout: {autosize: true, title: 'Initial plot'},
+    frames: null
   };
 
   ngOnInit() {
-    console.log("client class: %o", feservice.FrontendServicePromiseClient);
-    const serviceUrl = '/';
+    const serviceUrl = window.document.location.protocol + '//' + window.document.location.host;
     const client: feservice.FrontendServicePromiseClient = new feservice.FrontendServicePromiseClient(serviceUrl);
-    console.log("client object: %o", client);
     const request = new GetGraphRequest();
-    request.setSeed("abc");
+    request.setScale(Math.random());
     client.getGraph(request).then((response: GetGraphResponse) => {
-      this.graph = GRAPH_SUCCESS;
-    }, () => {
-      this.graph = GRAPH2;
+      console.log("got response from server: %o", request);
+      this.graph = responseToPlotlyGraph(response);
+    }, (err) => {
+      console.error("error requesting graph: %o", err);
     });
-    //console.log("plotly: %o", Plotly);
   }
 };
+
+function responseToPlotlyGraph(request: GetGraphResponse): Plotly.Figure {
+  return {
+    data: request.getTracesList().map((trace): Plotly.Data => {
+      return {
+        x: trace.getPointsList().map((pt) => pt.getX()),
+        y: trace.getPointsList().map((pt) => pt.getY()),
+        mode: trace.getPlotlyMode() || 'lines+points',
+        type: trace.getPlotlyType() || 'scatter'
+      };
+    }),
+    layout: {autosize: true, title: 'Graph from gRPC'},
+    frames: null
+  };
+}
 
 @NgModule({
   declarations: [Home],
   imports: [
     CommonModule,
     PlotlyViaWindowModule,
-    //PlotlyModule,
     RouterModule.forChild([{path: '', component: Home}]),
   ],
 })
